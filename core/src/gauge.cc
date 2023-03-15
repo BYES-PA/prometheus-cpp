@@ -36,10 +36,22 @@ void Gauge::SetToCurrentTime() {
 
 double Gauge::Value() const { return value_; }
 
-ClientMetric Gauge::Collect() const {
+ClientMetric Gauge::Collect() {
   ClientMetric metric;
   metric.gauge.value = Value();
+  if (_resetOnCollect)
+    Set(0);
   return metric;
+}
+
+Gauge& Gauge::ResetOnCollect(bool value) {
+  _resetOnCollect = value;
+  return *this;
+}
+
+void Gauge::Update(double value, UpdateCallback updateCallback) {
+  double current = 0;
+  while (!value_.compare_exchange_weak(current, updateCallback(current, value)));
 }
 
 }  // namespace prometheus
