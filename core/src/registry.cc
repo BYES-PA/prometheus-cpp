@@ -44,6 +44,9 @@ Registry::Registry(InsertBehavior insert_behavior)
 Registry::~Registry() = default;
 
 std::vector<MetricFamily> Registry::Collect() const {
+  for (auto& subscription : onCollectSubscriptions_)
+    subscription.Callback(*this, subscription.pApp);
+
   std::lock_guard<std::mutex> lock{mutex_};
   auto results = std::vector<MetricFamily>{};
 
@@ -199,5 +202,10 @@ Registry::Remove(const Family<Histogram>& family);
 
 template bool PROMETHEUS_CPP_CORE_EXPORT
 Registry::Remove(const Family<Info>& family);
+
+Registry& Registry::RegisterOnCollect(OnCollectCallback subscriber, void* pApp) {
+  onCollectSubscriptions_.push_back(OnCollectSubscription{subscriber, pApp});
+  return *this;
+}
 
 }  // namespace prometheus

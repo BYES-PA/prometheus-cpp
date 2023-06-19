@@ -94,6 +94,9 @@ class PROMETHEUS_CPP_CORE_EXPORT Registry : public Collectable {
   template <typename T>
   bool Remove(const Family<T>& family);
 
+  using OnCollectCallback = void(*)(Registry const& registry, void* pApp);
+  Registry& RegisterOnCollect(OnCollectCallback subscriber, void* pApp);
+
  private:
   template <typename T>
   friend class detail::Builder;
@@ -115,6 +118,13 @@ class PROMETHEUS_CPP_CORE_EXPORT Registry : public Collectable {
   std::vector<std::unique_ptr<Family<Info>>> infos_;
   std::vector<std::unique_ptr<Family<Summary>>> summaries_;
   mutable std::mutex mutex_;
+
+  struct OnCollectSubscription {
+    OnCollectCallback Callback;
+    void* pApp;
+  };
+
+  std::vector<OnCollectSubscription> onCollectSubscriptions_;
 };
 
 }  // namespace prometheus
